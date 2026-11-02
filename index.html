@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="HashPulse - Client-Side Password Security & Vulnerability Analyzer. Powered by zxcvbn entropy modeling and Have I Been Pwned k-Anonymity API. 100% local, zero plaintext transmission.">
+  <meta name="author" content="HashPulse">
+  <title>HashPulse // Password Security &amp; Vulnerability Analyzer</title>
+
+  <!-- Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="style.css">
+
+  <!-- zxcvbn library via official Cloudflare CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/zxcvbn/4.4.2/zxcvbn.js" defer></script>
+  <script src="script.js" defer></script>
+</head>
+<body>
+  <div class="app-container">
+    
+    <!-- Header -->
+    <header class="header">
+      <div class="brand">
+        <span class="brand-badge">HASHPULSE // SEC-AUDIT</span>
+        <h1 class="brand-title">HASHPULSE</h1>
+        <p class="brand-desc">Local Entropy Analysis &bull; Rainbow/Dictionary Check &bull; HIBP k-Anonymity &bull; Hardware Crack Estimator</p>
+      </div>
+      <div class="privacy-pill">
+        <span class="privacy-dot"></span>
+        <span class="privacy-text">100% CLIENT-SIDE &bull; ZERO DATA LEAKAGE</span>
+      </div>
+    </header>
+
+    <!-- Main Input Card -->
+    <main class="main-card">
+      <div class="input-section">
+        <div class="input-header">
+          <label for="password-input" class="input-label">TARGET PASSWORD</label>
+          <div class="input-actions">
+            <button type="button" id="toggle-visibility-btn" class="action-btn" aria-label="Toggle password visibility">
+              <span id="visibility-icon">[ SHOW ]</span>
+            </button>
+            <button type="button" id="generate-btn" class="action-btn" title="Generate strong random password">
+              [ GENERATE STRONG ]
+            </button>
+            <button type="button" id="clear-btn" class="action-btn" title="Clear input">
+              [ CLEAR ]
+            </button>
+          </div>
+        </div>
+
+        <div class="input-wrapper">
+          <input 
+            type="password" 
+            id="password-input" 
+            placeholder="Type or paste a password to inspect with HashPulse..."
+            autocomplete="off"
+            autocorrect="off"
+            autocapitalize="off"
+            spellcheck="false"
+          >
+        </div>
+
+        <!-- Strength Meter Bar -->
+        <div class="meter-wrapper">
+          <div class="meter-track">
+            <div class="meter-segment" data-score="0"></div>
+            <div class="meter-segment" data-score="1"></div>
+            <div class="meter-segment" data-score="2"></div>
+            <div class="meter-segment" data-score="3"></div>
+            <div class="meter-segment" data-score="4"></div>
+          </div>
+          <div class="meter-meta">
+            <span class="meter-label">EVALUATION:</span>
+            <span id="strength-label" class="meter-status">IDLE (AWAITING INPUT)</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Compromised / Breach Alert Banner (Dynamic) -->
+      <div id="breach-banner" class="banner hidden" role="alert">
+        <div class="banner-header">
+          <span class="banner-badge">[ ALERT: PWNED IN DATA BREACH ]</span>
+        </div>
+        <div class="banner-body">
+          <p id="breach-detail">This password was discovered in public data breaches. Attackers with rainbow tables or wordlists can crack this immediately.</p>
+        </div>
+      </div>
+
+      <!-- Quick Stats Grid -->
+      <section class="stats-grid">
+        <div class="stat-card">
+          <span class="stat-title">LENGTH</span>
+          <span id="stat-length" class="stat-value">0</span>
+          <span class="stat-sub">chars</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-title">ENTROPY</span>
+          <span id="stat-entropy" class="stat-value">0.0</span>
+          <span class="stat-sub">bits</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-title">SEARCH SPACE</span>
+          <span id="stat-combinations" class="stat-value">0</span>
+          <span class="stat-sub">combinations</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-title">HIBP STATUS</span>
+          <span id="stat-hibp" class="stat-value">UNCHECKED</span>
+          <span id="stat-hibp-sub" class="stat-sub">k-anonymity</span>
+        </div>
+      </section>
+
+      <!-- Rule & Composition Checklist -->
+      <section class="panel">
+        <div class="panel-header">
+          <h2 class="panel-title">CHARACTER SET DIVERSITY</h2>
+        </div>
+        <div class="rules-grid">
+          <div class="rule-item" id="rule-lower">
+            <span class="rule-icon">[ &nbsp; ]</span>
+            <span class="rule-label">Lowercase (a-z)</span>
+          </div>
+          <div class="rule-item" id="rule-upper">
+            <span class="rule-icon">[ &nbsp; ]</span>
+            <span class="rule-label">Uppercase (A-Z)</span>
+          </div>
+          <div class="rule-item" id="rule-number">
+            <span class="rule-icon">[ &nbsp; ]</span>
+            <span class="rule-label">Digits (0-9)</span>
+          </div>
+          <div class="rule-item" id="rule-symbol">
+            <span class="rule-icon">[ &nbsp; ]</span>
+            <span class="rule-label">Symbols (!@#$%^&*)</span>
+          </div>
+          <div class="rule-item" id="rule-length">
+            <span class="rule-icon">[ &nbsp; ]</span>
+            <span class="rule-label">Length >= 12 Chars</span>
+          </div>
+          <div class="rule-item" id="rule-repeat">
+            <span class="rule-icon">[ &nbsp; ]</span>
+            <span class="rule-label">No Consecutive Repeats</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Crack Time Matrix -->
+      <section class="panel">
+        <div class="panel-header">
+          <h2 class="panel-title">ESTIMATED TIME TO CRACK BY ATTACK SCENARIO</h2>
+        </div>
+        <div class="table-responsive">
+          <table class="crack-table">
+            <thead>
+              <tr>
+                <th>ATTACK VECTOR</th>
+                <th>THROUGHPUT RATE</th>
+                <th>ESTIMATED TIME</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  <strong>Online Web Service</strong>
+                  <span class="table-desc">Throttled login endpoints, lockouts, network latency</span>
+                </td>
+                <td><code>100 / sec</code></td>
+                <td id="time-online" class="time-val">-</td>
+              </tr>
+              <tr>
+                <td>
+                  <strong>Offline Slow Hash</strong>
+                  <span class="table-desc">Modern salted KDFs (bcrypt, Argon2, PBKDF2)</span>
+                </td>
+                <td><code>10,000 / sec</code></td>
+                <td id="time-offline-slow" class="time-val">-</td>
+              </tr>
+              <tr>
+                <td>
+                  <strong>Offline Fast Hash (Single GPU)</strong>
+                  <span class="table-desc">Leaked NTLM or MD5 hashes cracked on RTX 4090</span>
+                </td>
+                <td><code>100,000,000,000 / sec (100 GH/s)</code></td>
+                <td id="time-offline-fast" class="time-val">-</td>
+              </tr>
+              <tr>
+                <td>
+                  <strong>Cracking Rig / Cluster</strong>
+                  <span class="table-desc">Multi-GPU rig (8x RTX 4090 Hashcat cluster)</span>
+                </td>
+                <td><code>1,000,000,000,000 / sec (1 TH/s)</code></td>
+                <td id="time-cluster" class="time-val">-</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- John the Ripper / Pattern Analysis -->
+      <section class="panel">
+        <div class="panel-header">
+          <h2 class="panel-title">PATTERN DETECTION &amp; VULNERABILITY BREAKDOWN</h2>
+        </div>
+        <div class="patterns-content">
+          <div class="feedback-block" id="feedback-warning-block">
+            <span class="feedback-title">PRIMARY WEAKNESS:</span>
+            <span id="feedback-warning" class="feedback-text">None identified yet.</span>
+          </div>
+
+          <div class="feedback-block" id="feedback-suggestions-block">
+            <span class="feedback-title">HARDENING ADVICE:</span>
+            <ul id="feedback-suggestions" class="feedback-list">
+              <li>Enter a password to run pattern inspection.</li>
+            </ul>
+          </div>
+
+          <div class="sequences-block">
+            <span class="feedback-title">DETECTED PATTERNS / DICTIONARY CHUNKS:</span>
+            <div id="detected-sequences" class="sequence-tags">
+              <span class="tag tag-empty">No recognizable patterns found</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Technical Architecture Footer Box -->
+      <footer class="tech-info">
+        <div class="tech-row">
+          <span class="tech-tag">METHODOLOGY:</span>
+          <span>Dual-layer audit combining zxcvbn Markov/spatial modeling with HaveIBeenPwned k-anonymity SHA-1 API.</span>
+        </div>
+        <div class="tech-row">
+          <span class="tech-tag">PRIVACY GUARANTEE:</span>
+          <span>Client calculates SHA-1 locally via Web Crypto API. Only the first 5 hexadecimal chars are transmitted to HIBP. Full hashes are matched in memory. Zero external storage.</span>
+        </div>
+      </footer>
+
+    </main>
+
+    <!-- Bottom credits -->
+    <div class="footer-meta">
+      <span>HASHPULSE // CLIENT-SIDE PASSWORD SECURITY ANALYZER</span>
+    </div>
+
+  </div>
+</body>
+</html>
