@@ -89,27 +89,6 @@ pip install -r requirements.txt
 
 ---
 
-## 🌐 Deploying Web App to GitHub Pages (From `/docs`)
-
-1. Push this repository to GitHub:
-   ```bash
-   git init
-   git add .
-   git commit -m "feat: initial release of HashPulse"
-   git branch -M main
-   git remote add origin https://github.com/<your-username>/HashPulse.git
-   git push -u origin main
-   ```
-2. In your GitHub repository:
-   - Go to **Settings** > **Pages**.
-   - Under **Build and deployment** $\to$ **Branch**: select `main`.
-   - In the folder dropdown, select **`/docs`**.
-   - Click **Save**.
-3. GitHub Pages will build and publish your web analyzer at:
-   `https://<your-username>.github.io/HashPulse/`
-
----
-
 ## ⚡ Attack Scenario Benchmarks
 
 | Attack Scenario | Hash Rate Profile | Attack Context |
