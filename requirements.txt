@@ -1,0 +1,4 @@
+# HashPulse CLI Requirements
+zxcvbn>=4.4.28
+requests>=2.31.0
+rich>=13.7.0
